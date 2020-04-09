@@ -18,6 +18,7 @@ app.get('/location', locationHandler);
 app.get('/weather', weatherHandler);
 app.get('/trails', trailsHandler);
 app.get('/movies', moviesHandler);
+app.get('/yelp', yelpHandler);
 app.use('*', notfoundHandler);
 app.use(errorHandler);
 
@@ -93,7 +94,9 @@ function trailsHandler(request, response) {
     superagent(`https://hikingproject.com/data/get-trails?lat=${request.query.latitude}&lon=${request.query.longitude}&maxDistance=400&key=${process.env.TRAIL_API_KEY}`)
         .then((trailRes) => {
             console.log(trailRes);
-            const trailsInfo = trailRes.body.trails.map((element) => { return new Trail(element) });
+            const trailsInfo = trailRes.body.trails.map((element) => {
+                return new Trail(element)
+            });
             response.status(200).json(trailsInfo);
         })
 
@@ -111,7 +114,7 @@ function Trail(element) {
     this.trail_url = element.url;
     this.conditions = element.conditionStatus;
     this.condition_date = element.conditionDate.toString().slice(0, 9);
-    this.condition_time = element.conditionDate.toString().slice(11, 8);
+    this.condition_time = element.conditionDate.toString().slice(11);
 
 }
 
@@ -124,21 +127,14 @@ function Trail(element) {
 //     "popularity": "8.2340",
 //     "released_on": "1993-06-24"
 //   },
-//   {
-//     "title": "Love Happens",
-//     "overview": "Dr. Burke Ryan is a successful self-help author and motivational speaker with a secret. While he helps thousands of people cope with tragedy and personal loss, he secretly is unable to overcome the death of his late wife. It's not until Burke meets a fiercely independent florist named Eloise that he is forced to face his past and overcome his demons.",
-//     "average_votes": "5.80",
-//     "total_votes": "282",
-//     "image_url": "https://image.tmdb.org/t/p/w500/pN51u0l8oSEsxAYiHUzzbMrMXH7.jpg",
-//     "popularity": "15.7500",
-//     "released_on": "2009-09-18"
-//   },
 
 function moviesHandler(request, response) {
-    superagent(`https://api.themoviedb.org/3/search/movie?api_key=${process.env.MOVIE_API_KEY}&query=${request.query.city}`) // https://api.themoviedb.org/3/search/movie?api_key=${key}&query=${city}
+    superagent(`https://api.themoviedb.org/3/search/movie?api_key=${process.env.MOVIE_API_KEY}&query=${request.query.search_query}`)
         .then((moviesRes) => {
-
-            const moviesInfo = moviesRes.body.results.forEach((element) => { return new Movie(element) });
+            console.log(moviesRes);
+            const moviesInfo = moviesRes.body.results.map((element) => {
+                return new Movie(element)
+            });
             response.status(200).json(moviesInfo);
         })
 
@@ -156,6 +152,27 @@ function Movie(element) {
     this.released_on = element.release_date;
 }
 
+function yelpHandler(request, response) {
+    superagent(`https://api.yelp.com/v3/businesses/search?location=${request.query.search_query}`).set({ "Authorization": `Bearer ${process.env.YELP_API_KEY}` })
+        .then((yelpRes) => {
+            console.log(yelpRes);
+            const yelpInfo = yelpRes.body.businesses.map((element) => {
+                return new Yelp(element)
+            });
+            response.status(200).json(yelpInfo);
+        })
+
+    .catch((err) => errorHandler(err, request, response));
+
+}
+
+function Yelp(element) {
+    this.name = element.name;
+    this.image_url = element.url;
+    this.price = element.price;
+    this.rating = element.rating;
+    this.url = element.url;
+}
 
 
 function errorHandler(error, request, response) {
