@@ -14,8 +14,9 @@ function yelpHandler(request, response) {
 
 function getYelp(city) {
     const city = request.query.search_query
-    const api_url = c(`https://api.yelp.com/v3/businesses/search?location=${city}`).set({
-            "Authorization": `Bearer ${process.env.YELP_API_KEY}`) return superagent.get(api_url).then(yelpInfo =>
+    const api_url = (`https://api.yelp.com/v3/businesses/search?location=${city}`).set({
+            "Authorization": `Bearer ${process.env.YELP_API_KEY}`)
+        .then(yelpInfo =>
             yelpData(yelpInfo.businesses.data)
         )
     }
